@@ -80,6 +80,13 @@ exports.ExposeStore = (moduleRaidStr) => {
         };
     }
 
+    const _getLinkPreview = window.mR.findModule('getLinkPreview');
+    if (_getLinkPreview && _getLinkPreview[0].getLinkPreview && _getLinkPreview[0].getLinkPreview.length === 0) {
+        window.Store.getLinkPreview = _getLinkPreview[0].getLinkPreview;
+    } else {
+        window.Store.getLinkPreview = () => null;
+    }
+
     // eslint-disable-next-line no-undef
     if ((m = window.mR.findModule('ChatCollection')[0]) && m.ChatCollection && typeof m.ChatCollection.findImpl === 'undefined' && typeof m.ChatCollection._find !== 'undefined') m.ChatCollection.findImpl = m.ChatCollection._find;
 
@@ -250,6 +257,17 @@ exports.LoadUtils = () => {
                     preview.preview = true;
                     preview.subtype = 'url';
                     options = { ...options, ...preview };
+                }
+            } else {
+                const link = window.Store.Validators.findLink(content);
+                if (link) {
+                    try {
+                        const preview = await window.Store.getLinkPreview(link).catch(() => null);
+                        if (preview) {
+                            preview.data.subtype = 'url';
+                            options = { ...options, ...preview.data };
+                        }
+                    } catch { /** empty */ }
                 }
             }
         }
